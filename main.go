@@ -19,10 +19,12 @@ func main() {
 	dbname := os.Getenv("DB_NAME")
 	port := os.Getenv("DB_PORT")
 	sslmode := os.Getenv("DB_SSLMODE")
+	timezone := os.Getenv("DB_TIMEZONE")
+	port = fmt.Sprintf(":%v", os.Getenv("PORT"))
 
 	dsn := fmt.Sprintf(
-		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v TimeZone=Asia/Kolkata",
-		host, user, password, dbname, port, sslmode,
+		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v TimeZone=%v",
+		host, user, password, dbname, port, sslmode, timezone,
 	)
 
 	db, err := config.InitDB(dsn)
@@ -45,7 +47,7 @@ func main() {
 	router.GET("/userlocation/:appwrite_user_id", userLocationHandler.GetUserLocationHandler)
 	router.POST("/appwrite/user/location", userLocationHandler.CreateUserFromAppwrite)
 
-	if err := router.Run(":8182"); err != nil {
+	if err := router.Run(port); err != nil {
 		log.Fatalf("Could not start server: %v", err)
 	}
 }

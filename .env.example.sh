@@ -6,4 +6,6 @@ export DB_USER="your_db_user"
 export DB_PASSWORD="your_db_password"
 export DB_SSLMODE="your_db_sslmode"
 export DB_NAME="your_db_name"
+export DB_TIMEZONE="your_db_timezone"
 export APPWRITE_WEBHOOK_SECRET="your_secret_value"
+export PORT="8080" # Change this to your desired port
