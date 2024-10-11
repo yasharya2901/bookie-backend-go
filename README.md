@@ -30,7 +30,16 @@ This is the backend for the Bookie project. It is a RESTful API that provides en
     cp .env.example.ps1 .env.ps1
     ```
 
-5. Update the environment variables
+5. Update the environment variables and run the script
+    #### For MacOS/Linux:
+    ```bash
+    source .env.sh
+    ```
+
+    #### For Windows:
+    ```powershell
+    .\.env.ps1
+    ```
 
 6. Run the server
     ```bash
