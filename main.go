@@ -43,6 +43,7 @@ func main() {
 
 	router.POST("/userlocation", userLocationHandler.CreateUserLocationHandler)
 	router.GET("/userlocation/:appwrite_user_id", userLocationHandler.GetUserLocationHandler)
+	router.POST("/appwrite/user/location", userLocationHandler.CreateUserFromAppwrite)
 
 	if err := router.Run(":8182"); err != nil {
 		log.Fatalf("Could not start server: %v", err)

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -45,4 +46,41 @@ func (h *UserLocationHandler) GetUserLocationHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, userLocation)
+}
+
+func (h *UserLocationHandler) CreateUserFromAppwrite(c *gin.Context) {
+	var appwriteResponse map[string]any
+
+	// TODO: Verify the webhook secret
+
+	// Bind the JSON into a map
+	if err := c.ShouldBindJSON(&appwriteResponse); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	// Check if the required fields are present
+	if _, ok := appwriteResponse["latitude"]; !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Latitude is required"})
+		return
+	}
+	if _, ok := appwriteResponse["longitude"]; !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Longitude is required"})
+		return
+	}
+	if _, ok := appwriteResponse["$id"]; !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "$id is required"})
+		return
+	}
+
+	// Create the user location
+	userLocation := models.UserLocation{
+		Latitude:       appwriteResponse["latitude"].(float64),
+		Longitude:      appwriteResponse["longitude"].(float64),
+		AppwriteUserID: appwriteResponse["$id"].(string),
+	}
+
+	h.Service.CreateUserLocation(&userLocation)
+	message := fmt.Sprintf("User %v location created successfully", userLocation.AppwriteUserID)
+	c.JSON(http.StatusCreated, gin.H{"message": message})
 }
