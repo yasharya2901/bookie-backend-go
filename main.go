@@ -17,14 +17,14 @@ func main() {
 	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
 	dbname := os.Getenv("DB_NAME")
-	port := os.Getenv("DB_PORT")
+	dbport := os.Getenv("DB_PORT")
 	sslmode := os.Getenv("DB_SSLMODE")
 	timezone := os.Getenv("DB_TIMEZONE")
-	port = fmt.Sprintf(":%v", os.Getenv("PORT"))
+	port := fmt.Sprintf(":%v", os.Getenv("PORT"))
 
 	dsn := fmt.Sprintf(
 		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v TimeZone=%v",
-		host, user, password, dbname, port, sslmode, timezone,
+		host, user, password, dbname, dbport, sslmode, timezone,
 	)
 
 	db, err := config.InitDB(dsn)
