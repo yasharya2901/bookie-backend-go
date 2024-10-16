@@ -1,8 +1,13 @@
 package handlers
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/yasharya2901/bookie-backend-go/models"
@@ -51,10 +56,35 @@ func (h *UserLocationHandler) GetUserLocationHandler(c *gin.Context) {
 func (h *UserLocationHandler) CreateUserFromAppwrite(c *gin.Context) {
 	var appwriteResponse map[string]any
 
-	// TODO: Verify the webhook secret
+	// Get the raw data from the request
+	payloadBody, err := c.GetRawData()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read request body"})
+		return
+	}
 
-	// Bind the JSON into a map
-	if err := c.ShouldBindJSON(&appwriteResponse); err != nil {
+	scheme := "http"
+	if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" { // The "X-Forwarded-Proto" header is set by Ngrok while forwarding the request to the local server
+		scheme = "https"
+	}
+
+	fullURL := scheme + "://" + c.Request.Host + c.Request.URL.Path
+
+	signature, err := generateSignature(fullURL, string(payloadBody))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify webhook signature"})
+		return
+	}
+
+	headerSignature := c.GetHeader("X-Appwrite-Webhook-Signature")
+
+	if signature != headerSignature {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed Authentication Check"})
+		return
+	}
+
+	// Unmarshalling the payload body because c.GetRawData() empties the request body
+	if err := json.Unmarshal(payloadBody, &appwriteResponse); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
@@ -80,7 +110,21 @@ func (h *UserLocationHandler) CreateUserFromAppwrite(c *gin.Context) {
 		AppwriteUserID: appwriteResponse["$id"].(string),
 	}
 
-	h.Service.CreateUserLocation(&userLocation)
+	// Database call to create the user location
+	err = h.Service.CreateUserLocation(&userLocation)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user location"})
+		return
+	}
 	message := fmt.Sprintf("User %v location created successfully", userLocation.AppwriteUserID)
 	c.JSON(http.StatusCreated, gin.H{"message": message})
+}
+
+func generateSignature(url, payloadBody string) (string, error) {
+	data := url + payloadBody
+
+	hm := hmac.New(sha1.New, []byte(os.Getenv("APPWRITE_WEBHOOK_SECRET")))
+	hm.Write([]byte(data))
+
+	return base64.StdEncoding.EncodeToString(hm.Sum(nil)), nil
 }
