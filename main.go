@@ -43,9 +43,12 @@ func main() {
 
 	router := gin.Default()
 
-	router.POST("/userlocation", userLocationHandler.CreateUserLocationHandler)
-	router.GET("/userlocation/:appwrite_user_id", userLocationHandler.GetUserLocationHandler)
-	router.POST("/appwrite/user/location", userLocationHandler.CreateUserFromAppwrite)
+	api := router.Group("/api/v0")
+	{
+		api.POST("/userlocation", userLocationHandler.CreateUserLocationHandler)
+		api.GET("/userlocation/:appwrite_user_id", userLocationHandler.GetUserLocationHandler)
+		api.POST("/appwrite/user/location", userLocationHandler.CreateUserFromAppwrite)
+	}
 
 	if err := router.Run(port); err != nil {
 		log.Fatalf("Could not start server: %v", err)
